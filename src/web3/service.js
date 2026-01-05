@@ -1,18 +1,29 @@
+// src/web3/service.js
 import { BrowserProvider, Contract } from 'ethers';
 import VaultABI from '../contracts/Vault.json';
 
 const VAULT_ADDRESS = import.meta.env.VITE_VAULT_CONTRACT;
-const SEPOLIA_CHAIN_ID = 11155111; 
 
 export const initWeb3 = async () => {
   if (!window.ethereum) throw new Error('MetaMask not installed');
-  
-  await window.ethereum.request({ method: 'eth_requestAccounts' });
+  console.log('Requesting accounts...');
+  // Принудительно запрашиваем аккаунты — MetaMask покажет окно выбора
+  const accounts = await window.ethereum.request({
+    method: 'eth_requestAccounts'
+  });
+
+  if (accounts.length === 0) {
+    await window.ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+  }
+
   const provider = new BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
-  const network = await provider.getNetwork();
+  const address = await signer.getAddress();
 
-  if (network.chainId !== SEPOLIA_CHAIN_ID) {
+  const network = await provider.getNetwork();
+  if (network.chainId !== 11155111) {
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: '0xaa36a7' }]
@@ -20,6 +31,5 @@ export const initWeb3 = async () => {
   }
 
   const vault = new Contract(VAULT_ADDRESS, VaultABI, signer);
-  const address = await signer.getAddress();
-  return { provider, signer, vault, address };
+  return { provider, vault, address };
 };
