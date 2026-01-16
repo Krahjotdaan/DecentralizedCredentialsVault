@@ -1,11 +1,7 @@
-// src/components/RecordsPanel.jsx
 import { useState } from 'react';
-import { BrowserProvider } from 'ethers';
-import { getEncryptionKey, decryptBackup } from '../crypto/encrypt.js';
-import { getFromIPFS } from '../web3/upload.js';
 import BackupDetail from './BackupDetail.jsx';
 
-export default function RecordsPanel({ backups, vault, account, role, encryptionKey }) {
+export default function RecordsPanel({ backups, vault, account, role, encryptionKey, onDeprecated, setBackups}) {
   const [showDeprecated, setShowDeprecated] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState(null);
 
@@ -22,11 +18,7 @@ export default function RecordsPanel({ backups, vault, account, role, encryption
   };
 
   const handleUpdated = (updatedBackup) => {
-    window.location.reload();
-  };
-
-  const handleDeprecated = (key) => {
-    window.location.reload();
+    setBackups(prev => prev.map(b => b.key === updatedBackup.key ? updatedBackup : b));
   };
 
   return (
@@ -71,7 +63,7 @@ export default function RecordsPanel({ backups, vault, account, role, encryption
           encryptionKey={encryptionKey}
           onClose={handleCloseDetail}
           onUpdated={handleUpdated}
-          onDeprecated={handleDeprecated}
+          onDeprecated={onDeprecated}
         />
       )}
     </div>

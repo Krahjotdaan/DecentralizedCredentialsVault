@@ -1,5 +1,3 @@
-// src/crypto/encrypt.js
-
 export const getChallenge = (address) => `VaultBackup:${address.toLowerCase()}`;
 
 export const getEncryptionKey = async (provider, address) => {

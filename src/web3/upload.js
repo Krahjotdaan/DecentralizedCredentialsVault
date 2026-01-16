@@ -1,5 +1,3 @@
-// src/web3/upload.js
-
 const PINATA_API_KEY = import.meta.env.VITE_PINATA_PROJECT_ID;
 const PINATA_SECRET_API_KEY = import.meta.env.VITE_PINATA_PROJECT_SECRET;
 

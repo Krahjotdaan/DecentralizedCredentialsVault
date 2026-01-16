@@ -1,4 +1,3 @@
-// src/web3/service.js
 import { BrowserProvider, Contract } from 'ethers';
 import VaultABI from '../contracts/Vault.json';
 
@@ -6,8 +5,6 @@ const VAULT_ADDRESS = import.meta.env.VITE_VAULT_CONTRACT;
 
 export const initWeb3 = async () => {
   if (!window.ethereum) throw new Error('MetaMask not installed');
-  console.log('Requesting accounts...');
-  // Принудительно запрашиваем аккаунты — MetaMask покажет окно выбора
   const accounts = await window.ethereum.request({
     method: 'eth_requestAccounts'
   });

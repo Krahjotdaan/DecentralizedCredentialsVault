@@ -1,13 +1,9 @@
-// src/App.jsx
 import { useState } from 'react';
 import ConnectButton from './components/ConnectButton';
 import BackupForm from './components/BackupForm';
 import AuthPanel from './components/AuthPanel';
 import RecordsPanel from './components/RecordsPanel';
-import { BrowserProvider, Contract } from 'ethers';
-import VaultABI from './contracts/Vault.json';
-
-const VAULT_ADDRESS = import.meta.env.VITE_VAULT_CONTRACT;
+import { BrowserProvider } from 'ethers';
 
 export default function App() {
   const [account, setAccount] = useState(null);
@@ -15,40 +11,39 @@ export default function App() {
   const [role, setRole] = useState(null);
   const [masterAddress, setMasterAddress] = useState('');
   const [backups, setBackups] = useState([]);
-  const [encryptionKey, setEncryptionKey] = useState(null); // ключ для расшифровки
+  const [encryptionKey, setEncryptionKey] = useState(null);
 
-  // src/App.jsx — добавьте обработку ошибки при получении ключа
-const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) => {
-  setAccount(address);
-  setVault(vault);
-  setMasterAddress(masterAddress);
+  const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) => {
+    setAccount(address);
+    setVault(vault);
+    setMasterAddress(masterAddress);
 
-  if (address.toLowerCase() === masterAddress.toLowerCase()) {
-    setRole('master');
-  } else if (isAuthorized) {
-    setRole('authorized');
-    await loadBackups(vault, address);
+    if (address.toLowerCase() === masterAddress.toLowerCase()) {
+      setRole('master');
+    } else if (isAuthorized) {
+      setRole('authorized');
+      await loadBackups(vault, address);
 
-    try {
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const key = await getEncryptionKey(provider, address);
-      setEncryptionKey(key);
-    } catch (err) {
-      if (err.code === 'ACTION_REJECTED') {
-        alert('Вы отменили запрос подписи. Подключение прервано.');
-        handleDisconnect(); // ← прерываем подключение
+      try {
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const key = await getEncryptionKey(provider, address);
+        setEncryptionKey(key);
+      } catch (err) {
+        if (err.code === 'ACTION_REJECTED') {
+          alert('Вы отменили запрос подписи. Подключение прервано.');
+          handleDisconnect();
+          return;
+        }
+        console.error('Failed to get encryption key:', err);
+        alert('Ошибка при получении ключа шифрования: ' + err.message);
+        handleDisconnect();
         return;
       }
-      console.error('Failed to get encryption key:', err);
-      alert('Ошибка при получении ключа шифрования: ' + err.message);
-      handleDisconnect();
-      return;
+    } else {
+      setRole('unauthorized');
     }
-  } else {
-    setRole('unauthorized');
-  }
-};
+  };
 
   const loadBackups = async (vault, address) => {
     try {
@@ -68,6 +63,10 @@ const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) =>
     setBackups(prev => [...prev, backup]);
   };
 
+  const handleDeprecated = (key) => {
+    setBackups(prev => prev.filter(b => b.key !== key));
+  };
+
   const handleDisconnect = async () => {
     if (window.ethereum) {
       try {
@@ -85,7 +84,6 @@ const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) =>
     setMasterAddress('');
     setBackups([]);
     setEncryptionKey(null);
-    window.location.reload();
   };
 
   return (
@@ -192,6 +190,8 @@ const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) =>
               account={account} 
               role={role} 
               encryptionKey={encryptionKey} 
+              onDeprecated={handleDeprecated} 
+              setBackups={setBackups}
             />
           ) : (
             <p style={{ color: '#888' }}>Только для авторизованных пользователей</p>
@@ -202,7 +202,6 @@ const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) =>
   );
 }
 
-// Вспомогательная функция для получения ключа (можно вынести в crypto)
 async function getEncryptionKey(provider, address) {
   const challenge = `VaultBackup:${address.toLowerCase()}`;
   const signature = await provider.send('personal_sign', [challenge, address]);
@@ -216,5 +215,5 @@ async function getEncryptionKey(provider, address) {
     bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
   }
 
-  return bytes; // ← это Uint8Array
+  return bytes;
 }

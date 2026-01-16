@@ -1,4 +1,3 @@
-// src/components/AuthPanel.jsx
 import { useState } from 'react';
 
 export default function AuthPanel({ vault, action }) {
@@ -9,15 +8,23 @@ export default function AuthPanel({ vault, action }) {
     e.preventDefault();
     setLoading(true);
     try {
+      let tx;
       if (action === 'authorize') {
-        await vault.authorize(addr);
+        tx = await vault.authorize(addr);
       } else {
-        await vault.deauthorize(addr);
+        tx = await vault.deauthorize(addr);
       }
-      alert(action === 'authorize' ? 'Authorized' : 'Deauthorized');
+
+      await tx.wait();
+
+      alert(action === 'authorize' ? 'Пользователь авторизован' : 'Пользователь деавторизован');
       setAddr('');
     } catch (err) {
-      alert('Error: ' + err.message);
+      if (err.code === 'ACTION_REJECTED') {
+        console.log('Транзакция отменена пользователем');
+        return;
+      }
+      alert('Ошибка: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -45,7 +52,7 @@ export default function AuthPanel({ vault, action }) {
         type="submit"
         disabled={loading}
         style={{
-          width: '100%', // ← ширина как у поля
+          width: '100%',
           padding: '6px',
           backgroundColor: action === 'authorize' ? '#4CAF50' : '#f44336',
           color: 'white',

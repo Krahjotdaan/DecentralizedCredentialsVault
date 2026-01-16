@@ -1,6 +1,4 @@
-// src/components/BackupDetail.jsx
 import { useState, useEffect } from 'react';
-import { BrowserProvider } from 'ethers';
 import { decryptBackup } from '../crypto/encrypt.js';
 import { getFromIPFS } from '../web3/upload.js';
 
@@ -8,11 +6,12 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
   const [isSecretVisible, setIsSecretVisible] = useState(false);
   const [secret, setSecret] = useState('');
   const [description, setDescription] = useState(backup.description);
-  const [loading, setLoading] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false); 
+  const [loadingDeprecate, setLoadingDeprecate] = useState(false); 
 
   useEffect(() => {
     loadBackup();
-  }, [backup.cid]); // ← зависимость от cid
+  }, [backup.cid]);
 
   const loadBackup = async () => {
     try {
@@ -27,7 +26,7 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
   const handleUpdate = async () => {
     if (!backup.allowedOverwrite) return;
 
-    setLoading(true);
+    setLoadingUpdate(true);
     try {
       const tx = await vault.updateBackup(backup.key, backup.cid, description);
       await tx.wait();
@@ -40,13 +39,13 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
       }
       alert('Ошибка при обновлении: ' + err.message);
     } finally {
-      setLoading(false);
+      setLoadingUpdate(false);
     }
   };
 
   const handleDeprecate = async () => {
     if (window.confirm('Эту операцию нельзя отменить. Вы уверены?')) {
-      setLoading(true);
+      setLoadingDeprecate(true);
       try {
         const tx = await vault.deprecateBackup(backup.key);
         await tx.wait();
@@ -59,14 +58,13 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
         }
         alert('Ошибка при пометке как устаревшая: ' + err.message);
       } finally {
-        setLoading(false);
+        setLoadingDeprecate(false);
       }
     }
   };
 
   const ipfsUrl = `https://ipfs.io/ipfs/${backup.cid}`;
 
-  // Если устаревший — блокируем всё
   const isDeprecated = backup.deprecated;
 
   return (
@@ -89,7 +87,6 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
         width: '400px',
         position: 'relative'
       }}>
-        {/* Кнопка закрытия */}
         <button
           onClick={onClose}
           style={{
@@ -163,32 +160,32 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
           <button
             onClick={handleUpdate}
-            disabled={isDeprecated || !backup.allowedOverwrite || loading}
+            disabled={isDeprecated || !backup.allowedOverwrite || loadingUpdate}
             style={{
               padding: '8px',
               backgroundColor: isDeprecated || !backup.allowedOverwrite ? '#666' : '#2196F3',
               color: 'white',
               border: 'none',
-              cursor: isDeprecated || !backup.allowedOverwrite || loading ? 'not-allowed' : 'pointer'
+              cursor: isDeprecated || !backup.allowedOverwrite || loadingUpdate ? 'not-allowed' : 'pointer'
             }}
           >
-            {isDeprecated ? 'Устарело' : !backup.allowedOverwrite ? 'Редактирование запрещено' : loading ? 'Обновляю...' : 'Изменить'}
+            {isDeprecated ? 'Устарело' : !backup.allowedOverwrite ? 'Редактирование запрещено' : loadingUpdate ? 'Обновляю...' : 'Изменить'}
           </button>
 
           <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #444' }} />
 
           <button
             onClick={handleDeprecate}
-            disabled={isDeprecated || loading}
+            disabled={isDeprecated || loadingDeprecate}
             style={{
               padding: '8px',
               backgroundColor: isDeprecated ? '#666' : '#f44336',
               color: 'white',
               border: 'none',
-              cursor: isDeprecated || loading ? 'not-allowed' : 'pointer'
+              cursor: isDeprecated || loadingDeprecate ? 'not-allowed' : 'pointer'
             }}
           >
-            {isDeprecated ? 'Устарело' : loading ? 'Помечаю...' : 'Сделать устаревшим'}
+            {isDeprecated ? 'Устарело' : loadingDeprecate ? 'Помечаю...' : 'Сделать устаревшим'}
           </button>
         </div>
       </div>

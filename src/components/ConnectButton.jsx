@@ -1,4 +1,3 @@
-// src/components/ConnectButton.jsx
 import { useState } from 'react';
 import { initWeb3 } from '../web3/service';
 
@@ -7,7 +6,7 @@ export default function ConnectButton({ onConnect, account, onDisconnect }) {
 
   const handleClick = async () => {
     if (account) {
-      onDisconnect(); // Это вызовет window.location.reload()
+      onDisconnect();
       return;
     }
 

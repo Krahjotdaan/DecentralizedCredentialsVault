@@ -1,4 +1,3 @@
-// src/components/BackupForm.jsx
 import { useState } from 'react';
 import { BrowserProvider } from 'ethers';
 import { getEncryptionKey, encryptBackup } from '../crypto/encrypt.js';
@@ -55,7 +54,18 @@ export default function BackupForm({ vault, onCreated }) {
         console.log('Транзакция отменена пользователем');
         return;
       }
-      alert('Ошибка: ' + err.message);
+
+      let errorMessage = 'Ошибка при создании записи';
+
+      if (err.reason) {
+        errorMessage = err.reason;
+      } else if (err.data && err.data.reason) {
+        errorMessage = err.data.reason;
+      } else if (err.message.includes('revert')) {
+        errorMessage = 'Произошла ошибка в контракте';
+      }
+
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -101,7 +111,7 @@ export default function BackupForm({ vault, onCreated }) {
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="описание"
+          placeholder="описание (необязательно)"
           style={{
             width: '100%',
             padding: '4px',
