@@ -3,42 +3,31 @@ import { useState } from 'react';
 import { BrowserProvider } from 'ethers';
 import { getEncryptionKey, decryptBackup } from '../crypto/encrypt.js';
 import { getFromIPFS } from '../web3/upload.js';
+import BackupDetail from './BackupDetail.jsx';
 
-export default function RecordsPanel({ backups }) {
+export default function RecordsPanel({ backups, vault, account, role, encryptionKey }) {
   const [showDeprecated, setShowDeprecated] = useState(false);
-  const [decryptedValues, setDecryptedValues] = useState({});
-
-  const handleDecrypt = async (backup) => {
-    if (decryptedValues[backup.key]) return;
-    
-    try {
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      
-      const keyBytes = await getEncryptionKey(provider, address);
-      const data = await getFromIPFS(backup.cid);
-      const plaintext = await decryptBackup(data.ciphertext, data.iv, keyBytes);
-      
-      setDecryptedValues(prev => ({ ...prev, [backup.key]: plaintext }));
-    } catch (err) {
-      alert('Decryption failed: ' + err.message);
-    }
-  };
-
-  const handleDeprecate = async (key, vault) => {
-    try {
-      await vault.deprecateBackup(key);
-      // Обновление списка происходит через App.jsx → loadBackups
-      alert('Record deprecated');
-    } catch (err) {
-      alert('Failed to deprecate: ' + err.message);
-    }
-  };
+  const [selectedBackup, setSelectedBackup] = useState(null);
 
   const filteredBackups = showDeprecated 
     ? backups 
     : backups.filter(b => !b.deprecated);
+
+  const handleBackupClick = (backup) => {
+    setSelectedBackup(backup);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedBackup(null);
+  };
+
+  const handleUpdated = (updatedBackup) => {
+    window.location.reload();
+  };
+
+  const handleDeprecated = (key) => {
+    window.location.reload();
+  };
 
   return (
     <div>
@@ -66,7 +55,7 @@ export default function RecordsPanel({ backups }) {
                 backgroundColor: b.deprecated ? '#fff0f0' : '#fff',
                 cursor: 'pointer'
               }}
-              onClick={() => handleDecrypt(b)}
+              onClick={() => handleBackupClick(b)}
             >
               <span>{b.key}</span>
               {b.deprecated && <span style={{ color: 'red', marginLeft: '5px' }}>(устарело)</span>}
@@ -74,6 +63,17 @@ export default function RecordsPanel({ backups }) {
           ))
         )}
       </div>
+
+      {selectedBackup && (
+        <BackupDetail
+          backup={selectedBackup}
+          vault={vault}
+          encryptionKey={encryptionKey}
+          onClose={handleCloseDetail}
+          onUpdated={handleUpdated}
+          onDeprecated={handleDeprecated}
+        />
+      )}
     </div>
   );
 }

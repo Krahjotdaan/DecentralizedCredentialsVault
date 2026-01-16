@@ -15,21 +15,40 @@ export default function App() {
   const [role, setRole] = useState(null);
   const [masterAddress, setMasterAddress] = useState('');
   const [backups, setBackups] = useState([]);
+  const [encryptionKey, setEncryptionKey] = useState(null); // ключ для расшифровки
 
-  const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) => {
-    setAccount(address);
-    setVault(vault);
-    setMasterAddress(masterAddress);
+  // src/App.jsx — добавьте обработку ошибки при получении ключа
+const handleConnect = async ({ address, vault, masterAddress, isAuthorized }) => {
+  setAccount(address);
+  setVault(vault);
+  setMasterAddress(masterAddress);
 
-    if (address.toLowerCase() === masterAddress.toLowerCase()) {
-      setRole('master');
-    } else if (isAuthorized) {
-      setRole('authorized');
-      await loadBackups(vault, address);
-    } else {
-      setRole('unauthorized');
+  if (address.toLowerCase() === masterAddress.toLowerCase()) {
+    setRole('master');
+  } else if (isAuthorized) {
+    setRole('authorized');
+    await loadBackups(vault, address);
+
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const key = await getEncryptionKey(provider, address);
+      setEncryptionKey(key);
+    } catch (err) {
+      if (err.code === 'ACTION_REJECTED') {
+        alert('Вы отменили запрос подписи. Подключение прервано.');
+        handleDisconnect(); // ← прерываем подключение
+        return;
+      }
+      console.error('Failed to get encryption key:', err);
+      alert('Ошибка при получении ключа шифрования: ' + err.message);
+      handleDisconnect();
+      return;
     }
-  };
+  } else {
+    setRole('unauthorized');
+  }
+};
 
   const loadBackups = async (vault, address) => {
     try {
@@ -65,6 +84,7 @@ export default function App() {
     setRole(null);
     setMasterAddress('');
     setBackups([]);
+    setEncryptionKey(null);
     window.location.reload();
   };
 
@@ -166,7 +186,13 @@ export default function App() {
         }}>
           <h4>Записи</h4>
           {role === 'authorized' ? (
-            <RecordsPanel backups={backups} />
+            <RecordsPanel 
+              backups={backups} 
+              vault={vault} 
+              account={account} 
+              role={role} 
+              encryptionKey={encryptionKey} 
+            />
           ) : (
             <p style={{ color: '#888' }}>Только для авторизованных пользователей</p>
           )}
@@ -174,4 +200,21 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+// Вспомогательная функция для получения ключа (можно вынести в crypto)
+async function getEncryptionKey(provider, address) {
+  const challenge = `VaultBackup:${address.toLowerCase()}`;
+  const signature = await provider.send('personal_sign', [challenge, address]);
+
+  const { keccak256, toUtf8Bytes } = await import('ethers');
+  const keyHex = keccak256(toUtf8Bytes(signature));
+
+  const hex = keyHex.slice(2);
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+
+  return bytes; // ← это Uint8Array
 }

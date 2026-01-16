@@ -24,7 +24,7 @@ export default function AuthPanel({ vault, action }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <div style={{ marginBottom: '8px' }}>
         <label>Адрес: </label>
         <input
@@ -32,20 +32,26 @@ export default function AuthPanel({ vault, action }) {
           value={addr}
           onChange={(e) => setAddr(e.target.value)}
           placeholder="0x..."
-          style={{ width: '100%', padding: '4px' }}
+          style={{
+            width: '100%',
+            padding: '4px',
+            boxSizing: 'border-box'
+          }}
           required
         />
       </div>
+
       <button
         type="submit"
         disabled={loading}
         style={{
-          width: '100%',
+          width: '100%', // ← ширина как у поля
           padding: '6px',
           backgroundColor: action === 'authorize' ? '#4CAF50' : '#f44336',
           color: 'white',
           border: 'none',
-          cursor: loading ? 'not-allowed' : 'pointer'
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxSizing: 'border-box'
         }}
       >
         {loading ? '...' : 'Отправить'}

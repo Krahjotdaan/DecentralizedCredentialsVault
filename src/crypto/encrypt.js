@@ -30,10 +30,31 @@ export const encryptBackup = async (plaintext, keyBytes) => {
 };
 
 export const decryptBackup = async (ciphertextB64, ivB64, keyBytes) => {
-  const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt']);
-  const ciphertext = new Uint8Array([...atob(ciphertextB64)].map(c => c.charCodeAt(0)));
-  const iv = new Uint8Array([...atob(ivB64)].map(c => c.charCodeAt(0)));
+  if (!keyBytes || !(keyBytes instanceof Uint8Array)) {
+    throw new Error('Invalid encryption key: must be Uint8Array');
+  }
 
-  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-  return new TextDecoder().decode(decrypted);
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyBytes,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+
+    const ciphertext = new Uint8Array([...atob(ciphertextB64)].map(c => c.charCodeAt(0)));
+    const iv = new Uint8Array([...atob(ivB64)].map(c => c.charCodeAt(0)));
+
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ciphertext
+    );
+
+    return new TextDecoder().decode(decrypted);
+  } catch (err) {
+    console.error('Decryption error:', err);
+    throw new Error(`Decryption failed: ${err.message}`);
+  }
 };

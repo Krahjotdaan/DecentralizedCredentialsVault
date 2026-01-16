@@ -8,6 +8,7 @@ export default function BackupForm({ vault, onCreated }) {
   const [key, setKey] = useState('');
   const [value, setValue] = useState('');
   const [description, setDescription] = useState('');
+  const [allowOverwrite, setAllowOverwrite] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -27,8 +28,8 @@ export default function BackupForm({ vault, onCreated }) {
       const encrypted = await encryptBackup(value, encryptionKey);
       const cid = await uploadToIPFS(encrypted);
 
-      const tx = await vault.createBackup(key, cid, description, false);
-      await tx.wait(); // Ждём подтверждения
+      const tx = await vault.createBackup(key, cid, description, allowOverwrite);
+      await tx.wait();
 
       const [createdAt, updatedAt, allowedOverwrite, deprecated, cidFromContract, descFromContract] = 
         await vault.getBackup(key);
@@ -48,6 +49,7 @@ export default function BackupForm({ vault, onCreated }) {
       setKey('');
       setValue('');
       setDescription('');
+      setAllowOverwrite(false);
     } catch (err) {
       if (err.code === 'ACTION_REJECTED') {
         console.log('Транзакция отменена пользователем');
@@ -61,38 +63,65 @@ export default function BackupForm({ vault, onCreated }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div>
+      <div style={{ marginBottom: '8px' }}>
         <label>Ключ: </label>
         <input
           type="text"
           value={key}
           onChange={(e) => setKey(e.target.value)}
           placeholder="my-key"
-          style={{ width: '100%', padding: '4px' }}
+          style={{
+            width: '100%',
+            padding: '4px',
+            boxSizing: 'border-box'
+          }}
           required
         />
       </div>
-      <div>
+
+      <div style={{ marginBottom: '8px' }}>
         <label>Значение: </label>
         <input
           type="password"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="secret value"
-          style={{ width: '100%', padding: '4px' }}
+          style={{
+            width: '100%',
+            padding: '4px',
+            boxSizing: 'border-box'
+          }}
           required
         />
       </div>
-      <div>
+
+      <div style={{ marginBottom: '8px' }}>
         <label>Описание: </label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="описание"
-          style={{ width: '100%', padding: '4px' }}
+          style={{
+            width: '100%',
+            padding: '4px',
+            boxSizing: 'border-box'
+          }}
         />
       </div>
+
+      <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <input
+          type="checkbox"
+          id="allowOverwrite"
+          checked={allowOverwrite}
+          onChange={(e) => setAllowOverwrite(e.target.checked)}
+        />
+        <label htmlFor="allowOverwrite" style={{ margin: 0 }}>
+          Разрешить редактирование
+        </label>
+      </div>
+
       <button
         type="submit"
         disabled={loading}
@@ -102,7 +131,8 @@ export default function BackupForm({ vault, onCreated }) {
           backgroundColor: '#2196F3',
           color: 'white',
           border: 'none',
-          cursor: loading ? 'not-allowed' : 'pointer'
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxSizing: 'border-box'
         }}
       >
         {loading ? 'Создаю...' : 'Создать'}
