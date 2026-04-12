@@ -16,8 +16,8 @@ contract Vault {
     address public immutable masterAddress;
 
     mapping(address => mapping(string => Backup)) public backups;
-    mapping(address => string[]) public backupKeys;
-    mapping(address => bool) public isAuthorized;
+    mapping(address => string[]) backupKeys;
+    mapping(address => bool) isAuthorized;
 
     event BackupCreated(address indexed owner, uint256 indexed createdAt, string cid, string key);
     event BackupUpdated(address indexed owner, uint256 indexed updatedAt, string cid, string key);
@@ -105,11 +105,13 @@ contract Vault {
     }
 
     function authorize(address addr) validAuthorization(addr) external {
+        require(!isAuthorized[addr], "Vault: Already authorized");
         isAuthorized[addr] = true;
         emit Authorized(addr);
     }
 
     function deauthorize(address addr) validAuthorization(addr) external {
+        require(isAuthorized[addr], "Vault: Already deauthorized");
         isAuthorized[addr] = false;
         emit Deauthorized(addr);
     } 

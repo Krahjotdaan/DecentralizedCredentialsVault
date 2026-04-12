@@ -3,6 +3,7 @@ import ConnectButton from './components/ConnectButton';
 import BackupForm from './components/BackupForm';
 import AuthPanel from './components/AuthPanel';
 import RecordsPanel from './components/RecordsPanel';
+import { getEncryptionKey } from './crypto/encrypt';
 import { BrowserProvider } from 'ethers';
 
 export default function App() {
@@ -20,16 +21,17 @@ export default function App() {
 
     if (address.toLowerCase() === masterAddress.toLowerCase()) {
       setRole('master');
-    } else if (isAuthorized) {
-      setRole('authorized');
-      await loadBackups(vault, address);
-
+    } 
+    else if (isAuthorized) {
       try {
         const provider = new BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const key = await getEncryptionKey(provider, address);
         setEncryptionKey(key);
-      } catch (err) {
+        setRole('authorized');
+        await loadBackups(vault, address);
+      } 
+      catch (err) {
         if (err.code === 'ACTION_REJECTED') {
           alert('Вы отменили запрос подписи. Подключение прервано.');
           handleDisconnect();
@@ -40,7 +42,8 @@ export default function App() {
         handleDisconnect();
         return;
       }
-    } else {
+    } 
+    else {
       setRole('unauthorized');
     }
   };
@@ -200,20 +203,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-async function getEncryptionKey(provider, address) {
-  const challenge = `VaultBackup:${address.toLowerCase()}`;
-  const signature = await provider.send('personal_sign', [challenge, address]);
-
-  const { keccak256, toUtf8Bytes } = await import('ethers');
-  const keyHex = keccak256(toUtf8Bytes(signature));
-
-  const hex = keyHex.slice(2);
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-
-  return bytes;
 }

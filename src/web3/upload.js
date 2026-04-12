@@ -1,5 +1,5 @@
 const PINATA_API_KEY = import.meta.env.VITE_PINATA_PROJECT_ID;
-const PINATA_SECRET_API_KEY = import.meta.env.VITE_PINATA_PROJECT_SECRET;
+const PINATA_SECRET_API_KEY = import.meta.env.VITE_PINATA_PROJECT_JWT;
 
 export const uploadToIPFS = async (encryptedData) => {
   const formData = new FormData();
