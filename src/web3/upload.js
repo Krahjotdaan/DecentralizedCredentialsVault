@@ -1,5 +1,4 @@
-const PINATA_API_KEY = import.meta.env.VITE_PINATA_PROJECT_ID;
-const PINATA_SECRET_API_KEY = import.meta.env.VITE_PINATA_PROJECT_JWT;
+const PINATA_JWT = import.meta.env.VITE_PINATA_PROJECT_JWT;
 
 export const uploadToIPFS = async (encryptedData) => {
   const formData = new FormData();
@@ -10,33 +9,32 @@ export const uploadToIPFS = async (encryptedData) => {
     const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
-        'pinata_api_key': PINATA_API_KEY,
-        'pinata_secret_api_key': PINATA_SECRET_API_KEY
+        'Authorization': `Bearer ${PINATA_JWT}`
       },
       body: formData
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Pinata upload failed: ${response.status} ${response.statusText}\n${text}`);
+      const errorData = await response.json();
+      throw new Error(`Pinata upload failed: ${response.status} - ${errorData.error?.reason || 'Unknown error'}`);
     }
 
     const result = await response.json();
     if (!result.IpfsHash) {
-      throw new Error(`No CID in response: ${JSON.stringify(result)}`);
+      throw new Error(`No CID in response`);
     }
 
     return result.IpfsHash;
   } catch (err) {
     console.error('Pinata Upload Error:', err);
-    throw new Error(`Failed to upload to IPFS: ${err.message}`);
+    throw err;
   }
 };
 
 export const getFromIPFS = async (cid) => {
-  const response = await fetch(`https://ipfs.io/ipfs/${cid}`);
+  const response = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
   if (!response.ok) {
-    throw new Error(`IPFS fetch failed: ${response.status} ${response.statusText}`);
+    throw new Error(`IPFS fetch failed: ${response.status}`);
   }
   return await response.json();
 };

@@ -109,6 +109,7 @@ export default function BackupForm({ vault, onCreated }) {
         <label>Описание: </label>
         <input
           type="text"
+          maxLength={100}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="описание (необязательно)"

@@ -17,7 +17,7 @@ contract Vault {
 
     mapping(address => mapping(string => Backup)) public backups;
     mapping(address => string[]) backupKeys;
-    mapping(address => bool) isAuthorized;
+    mapping(address => bool) public isAuthorized;
 
     event BackupCreated(address indexed owner, uint256 indexed createdAt, string cid, string key);
     event BackupUpdated(address indexed owner, uint256 indexed updatedAt, string cid, string key);

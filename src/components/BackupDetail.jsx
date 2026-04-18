@@ -144,6 +144,7 @@ export default function BackupDetail({ backup, vault, encryptionKey, onClose, on
           <label style={{ display: 'block', marginBottom: '5px' }}>Описание:</label>
           <textarea
             value={description}
+            maxLength={100}
             onChange={(e) => setDescription(e.target.value)}
             rows="4"
             style={{

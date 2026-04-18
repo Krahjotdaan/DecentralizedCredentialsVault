@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ConnectButton from './components/ConnectButton';
 import BackupForm from './components/BackupForm';
 import AuthPanel from './components/AuthPanel';
 import RecordsPanel from './components/RecordsPanel';
+import TestRunner from './components/TestRunner'; 
 import { getEncryptionKey } from './crypto/encrypt';
 import { BrowserProvider } from 'ethers';
 
-export default function App() {
+function Dashboard() {
   const [account, setAccount] = useState(null);
   const [vault, setVault] = useState(null);
   const [role, setRole] = useState(null);
@@ -202,5 +204,14 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/test" element={<TestRunner />} />
+    </Routes>
   );
 }
