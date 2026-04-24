@@ -5,6 +5,7 @@ import BackupForm from './components/BackupForm';
 import AuthPanel from './components/AuthPanel';
 import RecordsPanel from './components/RecordsPanel';
 import TestRunner from './components/TestRunner'; 
+import SecurityTests from './components/SecurityTests'; 
 import { getEncryptionKey } from './crypto/encrypt';
 import { BrowserProvider } from 'ethers';
 
@@ -212,6 +213,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/test" element={<TestRunner />} />
+      <Route path="/security" element={<SecurityTests />} />
     </Routes>
   );
 }
